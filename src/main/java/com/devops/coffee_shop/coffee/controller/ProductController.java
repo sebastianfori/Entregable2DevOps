@@ -3,6 +3,11 @@ package com.devops.coffee_shop.coffee.controller;
 import com.devops.coffee_shop.coffee.domain.ProductCategory;
 import com.devops.coffee_shop.coffee.dto.ProductDto;
 import com.devops.coffee_shop.coffee.service.ProductService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -19,6 +24,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/products")
 @CrossOrigin(origins = "*")
+@Tag(name = "Productos", description = "API para gestión de productos de la cafetería")
 public class ProductController {
     
     @Autowired
@@ -27,6 +33,10 @@ public class ProductController {
     /**
      * Obtiene todos los productos
      */
+    @Operation(summary = "Obtener todos los productos", description = "Retorna una lista de todos los productos disponibles")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Lista de productos obtenida exitosamente")
+    })
     @GetMapping
     public ResponseEntity<List<ProductDto>> getAllProducts() {
         List<ProductDto> products = productService.getAllProducts();
@@ -136,6 +146,7 @@ public class ProductController {
     /**
      * Endpoint de salud para verificar que el controlador funciona
      */
+    @Operation(summary = "Health check", description = "Verifica que el controlador de productos está funcionando")
     @GetMapping("/health")
     public ResponseEntity<String> healthCheck() {
         return ResponseEntity.ok("Product Controller is running!");
