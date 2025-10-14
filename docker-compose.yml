@@ -1,0 +1,37 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: coffee-shop-db
+    environment:
+      POSTGRES_DB: coffee_db
+      POSTGRES_USER: coffee_user
+      POSTGRES_PASSWORD: coffee_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - coffee-net
+
+  coffee-shop:
+    build: .
+    container_name: coffee-shop-app
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://coffee-shop-db:5432/coffee_db
+      - SPRING_DATASOURCE_USERNAME=coffee_user
+      - SPRING_DATASOURCE_PASSWORD=coffee_pass
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+    networks:
+      - coffee-net
+
+volumes:
+  pgdata:
+
+networks:
+  coffee-net:
