@@ -29,6 +29,12 @@ public class ClientDto {
     @Setter
     private String lastName;
 
+    @NotBlank(message = "El documento es obligatorio")
+    @Size(min = 8, max = 10, message = "El documento debe tener entre 8 y 10 caracteres")
+    @Getter
+    @Setter
+    private String documentNumber;
+
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     @NotNull(message = "La fecha de nacimiento es obligatoria")
     @Getter
@@ -48,16 +54,20 @@ public class ClientDto {
     private LocalDateTime updatedAt;
 
     // Constructores
-    public ClientDto() {
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-    }
+    public ClientDto() {}
 
     public ClientDto(String firstName, String lastName, Date birthDate, boolean active) {
-        this();
         this.firstName = firstName;
         this.lastName = lastName;
         this.birthDate = birthDate;
+        this.active = active;
+    }
+
+    public ClientDto(String firstName, String lastName, Date birthDate, String documentNumber, boolean active) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.birthDate = birthDate;
+        this.documentNumber = documentNumber;
         this.active = active;
     }
 }

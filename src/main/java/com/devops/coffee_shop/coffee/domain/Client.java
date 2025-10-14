@@ -29,6 +29,11 @@ public class Client {
     @Setter
     private String lastName;
 
+    @Column(nullable = false, unique = true, length = 64)
+    @Getter
+    @Setter
+    private String documentNumber;
+
     @Column(nullable = false)
     @Getter
     @Setter
@@ -60,6 +65,14 @@ public class Client {
         this.firstName = firstName;
         this.lastName = lastName;
         this.birthDate = birthDate;
+    }
+
+    public Client(String firstName, String lastName, Date birthDate, String documentNumber) {
+        this();
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.birthDate = birthDate;
+        this.documentNumber = documentNumber;
     }
 
     @PreUpdate

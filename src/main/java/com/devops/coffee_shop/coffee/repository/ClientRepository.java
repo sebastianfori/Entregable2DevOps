@@ -39,6 +39,26 @@ public interface ClientRepository extends JpaRepository<Client, Long> {
     boolean existsByFirstNameIgnoreCase(String firstName);
 
     /**
+     * Verifica si existe un cliente con el mismo nombre y apellido (case insensitive)
+     */
+    boolean existsByFirstNameIgnoreCaseAndLastNameIgnoreCase(String firstName, String lastName);
+
+    /**
+     * Verifica si existe otro cliente con el mismo nombre y apellido (excluyendo un ID)
+     */
+    boolean existsByFirstNameIgnoreCaseAndLastNameIgnoreCaseAndIdNot(String firstName, String lastName, Long id);
+
+    /**
+     * Verifica si existe un cliente con el mismo documento
+     */
+    boolean existsByDocumentNumber(String documentNumber);
+
+    /**
+     * Verifica si existe otro cliente con el mismo documento (excluyendo un ID)
+     */
+    boolean existsByDocumentNumberAndIdNot(String documentNumber, Long id);
+
+    /**
      * Busca un cliente por nombre exacto (case insensitive)
      */
     Optional<Client> findByFirstNameIgnoreCase(String firstName);

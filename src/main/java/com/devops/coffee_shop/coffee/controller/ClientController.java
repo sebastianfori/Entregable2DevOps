@@ -81,12 +81,12 @@ public class ClientController {
      * Crea un nuevo cliente
      */
     @PostMapping
-    public ResponseEntity<ClientDto> createClient(@Valid @RequestBody ClientDto clientDto) {
+    public ResponseEntity<?> createClient(@Valid @RequestBody ClientDto clientDto) {
         try {
             ClientDto createdClient = clientService.createClient(clientDto);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdClient);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
@@ -94,12 +94,16 @@ public class ClientController {
      * Actualiza un cliente existente
      */
     @PutMapping("/{id}")
-    public ResponseEntity<ClientDto> updateClient(@PathVariable Long id, @Valid @RequestBody ClientDto clientDto) {
+    public ResponseEntity<?> updateClient(@PathVariable Long id, @Valid @RequestBody ClientDto clientDto) {
         try {
             ClientDto updatedClient = clientService.updateClient(id, clientDto);
             return ResponseEntity.ok(updatedClient);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
+            String msg = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
+            if (msg.contains("ya existe un cliente")) {
+                return ResponseEntity.badRequest().body(e.getMessage());
+            }
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
 

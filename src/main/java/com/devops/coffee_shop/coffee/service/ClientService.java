@@ -78,9 +78,13 @@ public class ClientService {
      * Crea un nuevo cliente
      */
     public ClientDto createClient(ClientDto clientDto) {
-        // Validar que no exista un cliente con el mismo nombre
-        if (clientRepository.existsByFirstNameIgnoreCase(clientDto.getFirstName())) {
-            throw new IllegalArgumentException("Ya existe un cliente con el nombre: " + clientDto.getFirstName());
+        // Validar documento único
+        if (clientRepository.existsByDocumentNumber(clientDto.getDocumentNumber())) {
+            throw new IllegalArgumentException("Ya existe un cliente con el documento: " + clientDto.getDocumentNumber());
+        }
+        // Validar que no exista un cliente con el mismo nombre+apellido
+        if (clientRepository.existsByFirstNameIgnoreCaseAndLastNameIgnoreCase(clientDto.getFirstName(), clientDto.getLastName())) {
+            throw new IllegalArgumentException("Ya existe un cliente con el nombre y apellido: " + clientDto.getFirstName() + " " + clientDto.getLastName());
         }
 
         Client client = convertToEntity(clientDto);
@@ -95,16 +99,26 @@ public class ClientService {
         Client existingClient = clientRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Cliente no encontrado con ID: " + id));
 
-        // Validar que el nuevo nombre no esté en uso por otro cliente
-        if (!existingClient.getFirstName().equalsIgnoreCase(clientDto.getFirstName()) &&
-                clientRepository.existsByFirstNameIgnoreCase(clientDto.getFirstName())) {
-            throw new IllegalArgumentException("Ya existe un cliente con el nombre: " + clientDto.getFirstName());
+        // Validar documento único (excluyendo el propio ID)
+        if (clientDto.getDocumentNumber() != null &&
+                clientRepository.existsByDocumentNumberAndIdNot(clientDto.getDocumentNumber(), id)) {
+            throw new IllegalArgumentException("Ya existe un cliente con el documento: " + clientDto.getDocumentNumber());
+        }
+
+        // Validar que el nuevo nombre+apellido no esté en uso por otro cliente
+        boolean sameFirst = existingClient.getFirstName().equalsIgnoreCase(clientDto.getFirstName());
+        boolean sameLast = existingClient.getLastName().equalsIgnoreCase(clientDto.getLastName());
+        if (!(sameFirst && sameLast) &&
+                clientRepository.existsByFirstNameIgnoreCaseAndLastNameIgnoreCaseAndIdNot(
+                        clientDto.getFirstName(), clientDto.getLastName(), id)) {
+            throw new IllegalArgumentException("Ya existe un cliente con el nombre y apellido: " + clientDto.getFirstName() + " " + clientDto.getLastName());
         }
 
         // Actualizar campos
         existingClient.setFirstName(clientDto.getFirstName());
         existingClient.setLastName(clientDto.getLastName());
         existingClient.setBirthDate(clientDto.getBirthDate());
+        existingClient.setDocumentNumber(clientDto.getDocumentNumber());
         existingClient.setActive(clientDto.isActive());
 
         Client updatedClient = clientRepository.save(existingClient);
@@ -152,6 +166,6 @@ public class ClientService {
      * Convierte DTO a entidad
      */
     private Client convertToEntity(ClientDto dto) {
-        return new Client(dto.getFirstName(), dto.getLastName(), dto.getBirthDate());
+        return new Client(dto.getFirstName(), dto.getLastName(), dto.getBirthDate(), dto.getDocumentNumber());
     }
 }

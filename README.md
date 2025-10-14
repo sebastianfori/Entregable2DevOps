@@ -229,6 +229,7 @@ curl -X POST http://localhost:8082/api/clients \
   -d '{
     "firstName": "Juan",
     "lastName": "Pérez",
+    "documentNumber": "4.123.456-7",
     "birthDate": "1990-05-12",
     "active": true
   }'
