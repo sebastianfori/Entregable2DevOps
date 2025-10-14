@@ -67,12 +67,14 @@ Una vez ejecutándose, la aplicación estará disponible en:
 
 2. **Health Check**:
    ```
-   http://localhost:8082/api/products/health
+  http://localhost:8082/api/products/health
+  http://localhost:8082/api/clients/health
    ```
 
 3. **API Base**:
    ```
-   http://localhost:8082/api/products
+  http://localhost:8082/api/products
+  http://localhost:8082/api/clients
    ```
 
 ## 📚 Endpoints Disponibles
@@ -88,6 +90,17 @@ Una vez ejecutándose, la aplicación estará disponible en:
 - `PUT /api/products/{id}` - Actualizar producto
 - `DELETE /api/products/{id}` - Eliminar producto
 - `PATCH /api/products/{id}/toggle-availability` - Cambiar disponibilidad
+
+### Clientes
+- `GET /api/clients` - Obtener todos los clientes
+- `GET /api/clients/{id}` - Obtener cliente por ID
+- `GET /api/clients/active` - Obtener clientes activos
+- `GET /api/clients/search?firstName={firstName}` - Buscar clientes por nombre
+- `GET /api/clients/search?lastName={lastName}` - Buscar clientes por apellido
+- `POST /api/clients` - Crear nuevo cliente
+- `PUT /api/clients/{id}` - Actualizar cliente
+- `DELETE /api/clients/{id}` - Eliminar cliente
+- `PATCH /api/clients/{id}/toggle-availability` - Cambiar disponibilidad
 
 ### Health Check
 - `GET /api/products/health` - Verificar estado del controlador
@@ -204,6 +217,30 @@ curl -X POST http://localhost:8082/api/products \
 
 # Buscar productos
 curl "http://localhost:8082/api/products/search?name=café"
+
+# -------- Clientes --------
+
+# Obtener todos los clientes
+curl http://localhost:8082/api/clients
+
+# Crear un nuevo cliente
+curl -X POST http://localhost:8082/api/clients \
+  -H "Content-Type: application/json" \
+  -d '{
+    "firstName": "Juan",
+    "lastName": "Pérez",
+    "birthDate": "1990-05-12",
+    "active": true
+  }'
+
+# Buscar clientes por nombre
+curl "http://localhost:8082/api/clients/search?firstName=juan"
+
+# Buscar clientes por apellido
+curl "http://localhost:8082/api/clients/search?lastName=perez"
+
+# Activar/desactivar un cliente
+curl -X PATCH http://localhost:8082/api/clients/1/toggle-availability
 ```
 
 ## 🤝 Contribución
