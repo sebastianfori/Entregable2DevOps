@@ -62,19 +62,19 @@ Una vez ejecutándose, la aplicación estará disponible en:
 
 1. **Swagger UI** (Documentación de la API):
    ```
-   http://localhost:8082/swagger-ui/index.html
+    http://localhost:8082/swagger-ui/index.html
    ```
 
 2. **Health Check**:
    ```
-  http://localhost:8082/api/products/health
-  http://localhost:8082/api/clients/health
+      http://localhost:8082/api/products/health
+      http://localhost:8082/api/clients/health
    ```
 
 3. **API Base**:
    ```
-  http://localhost:8082/api/products
-  http://localhost:8082/api/clients
+      http://localhost:8082/api/products
+      http://localhost:8082/api/clients
    ```
 
 ## 📚 Endpoints Disponibles
