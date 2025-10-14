@@ -4,12 +4,12 @@ package com.devops.coffee_shop.coffee.domain;
  * Enum que representa las categorías de productos del café
  */
 public enum ProductCategory {
-    COFFEE("Café"),
-    TEA("Té"),
-    PASTRY("Pastelería"),
-    SANDWICH("Sándwich"),
-    BEVERAGE("Bebida"),
-    DESSERT("Postre");
+    COFFEE("COFFEE"),
+    TEA("TEA"),
+    PASTRY("PASTRY"),
+    SANDWICH("SANDWICH"),
+    BEVERAGE("BEVERAGE"),
+    DESSERT("DESSERT");
     
     private final String displayName;
     
