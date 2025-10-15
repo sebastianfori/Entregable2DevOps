@@ -13,7 +13,7 @@ COPY src src
 RUN ./mvnw clean package -DskipTests
 
 # Etapa 2: Imagen liviana para correr la app
-FROM eclipse-temurin:17-jdk-alpine
+FROM eclipse-temurin:17-jdk-jammy
 WORKDIR /app
 
 # Copiar el .jar generado desde la etapa anterior
