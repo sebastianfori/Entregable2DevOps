@@ -1,257 +1,466 @@
-# Coffee Shop API
+# Laboratorio 2: API de pedidos de Cafetería
 
-Una API REST para la gestión de productos de una cafetería desarrollada con Spring Boot.
+## 📋 Resumen Ejecutivo
 
-## 🚀 Características
+Este laboratorio implementa una **API REST completo para gestión de pedidos de cafetería** con **monitoreo DevOps** usando Spring Boot, Prometheus y Grafana.
 
-- API REST completa para gestión de productos
-- Documentación automática con Swagger UI
-- Base de datos H2 en memoria (desarrollo)
+### ✅ Requisitos Cumplidos
+
+**Funcionales:**
+- ✅ API REST completa para gestión de pedidos (CRUD)
+- ✅ Endpoints: POST, GET, PATCH, DELETE para pedidos
+- ✅ Estados de pedidos: NEW, IN_PROGRESS, READY, DELIVERED, CANCELED
+
+**No Funcionales:**
+- ✅ Java 17 + Spring Boot 3.0+
+- ✅ Métricas Prometheus en `/actuator/prometheus`
+- ✅ Contadores personalizados: `coffee_orders_created_total`, `coffee_orders_delivered_total`
+- ✅ Scraping cada 5 segundos
+- ✅ Dashboards Grafana funcionales
+- ✅ Containerización con Docker
+- ✅ Despliegue en Kubernetes
+
+### 🎯 Métricas Implementadas
+
+- **RPS (Requests Per Second)**: `sum(rate(http_server_requests_seconds_count[5m]))`
+- **Latencia promedio**: `sum(rate(http_server_requests_seconds_sum[5m])) / sum(rate(http_server_requests_seconds_count[5m]))`
+- **Pedidos creados**: `coffee_orders_total`
+- **Pedidos entregados**: `coffee_orders_delivered_total`
+- **Memoria JVM**: `jvm_memory_used_bytes{area="heap"}` y `jvm_memory_used_bytes{area="nonheap"}`
+
+---
+
+## 🚀 Guía Rápida de inicio
+
+### 1. Iniciar el Laboratorio
+```bash
+# Clonar y ejecutar
+git clone <url-repo>
+cd entregable2devops
+./start-local.sh
+```
+
+### 2. Acceder a los Recursos
+- **API**: http://localhost:8080
+- **Swagger UI**: http://localhost:8080/swagger-ui/index.html
+- **Métricas**: http://localhost:8080/actuator/prometheus
+- **Prometheus**: http://localhost:9090
+- **Grafana**: http://localhost:3000 (Credenciales: admin/admin123)
+
+### 3. Ver Dashboards
+1. Ir a http://localhost:3000
+2. Login: admin/admin123
+3. Buscar "Coffee Shop Monitoring Dashboard"
+4. Ver métricas en tiempo real
+
+### 4. Ejecutar Validación
+```bash
+./validate-lab.sh
+```
+
+### 5. Generar Datos de Prueba
+```bash
+./generate-test-metrics.sh
+```
+
+---
+
+## 📚 Estructura del Laboratorio
+
+### Parte 1: API REST
+**Objetivo**: Desarrollar API REST para gestión de pedidos de cafetería
+
+**Implementación**:
+- Spring Boot 3.0+ con Java 17
+- Endpoints CRUD completos para pedidos
 - Validación de datos con Bean Validation
-- Endpoints para CRUD completo de productos
+- Documentación automática con Swagger UI
 
-## 📋 Prerrequisitos
-
-- Java 17 o superior
-- Maven 3.6+
-- Docker y Docker Compose (para base de datos PostgreSQL)
-
-## 🛠️ Instalación y Configuración
-
-### 1. Clonar el repositorio
-```bash
-git clone <repository-url>
-cd coffee_shop
+**Endpoints Implementados**:
+```
+POST   /api/orders                    # Crear pedido
+GET    /api/orders                    # Listar todos los pedidos
+GET    /api/orders/{id}               # Obtener pedido por ID
+PATCH  /api/orders/{id}/status/{status} # Actualizar estado
+DELETE /api/orders/{id}               # Eliminar pedido
 ```
 
-### 2. Instalar dependencias
-```bash
-mvn clean install
+**Estructura de Pedido**:
+```json
+{
+  "customerName": "Ana",
+  "drink": "latte",
+  "quantity": 2,
+  "status": "NEW",
+  "createdAt": "2025-10-27T00:23:02.161309"
+}
 ```
 
-## 🚀 Ejecución
+**Estados de Pedido**:
+- `NEW`: Pedido creado
+- `IN_PROGRESS`: En preparación
+- `READY`: Listo para entrega
+- `DELIVERED`: Entregado
+- `CANCELED`: Cancelado
 
-### Opción 1: Con base de datos H2 (desarrollo)
-```bash
-mvn spring-boot:run
+### Parte 2: Métricas y Observabilidad
+**Objetivo**: Exponer métricas de aplicación e infraestructura mediante Micrometer + Prometheus
+
+**Implementación**:
+- Spring Boot Actuator habilitado
+- Endpoint `/actuator/prometheus` expuesto
+- Métricas personalizadas con Micrometer
+- Contadores de negocio implementados
+
+**Métricas Personalizadas**:
+```java
+@Component
+public class CoffeeMetrics {
+    private final Counter ordersCreatedCounter;
+    private final Counter ordersDeliveredCounter;
+    
+    public void incrementOrdersCreated() {
+        ordersCreatedCounter.increment();
+    }
+    
+    public void incrementOrdersDelivered() {
+        ordersDeliveredCounter.increment();
+    }
+}
 ```
 
-### Opción 2: Con PostgreSQL (producción)
-```bash
-# Iniciar base de datos
-docker compose up -d db
+**Métricas Expuestas**:
+- `coffee_orders_total`: Total de pedidos creados
+- `coffee_orders_delivered_total`: Total de pedidos entregados
+- `http_server_requests_seconds_count`: Conteo de requests HTTP
+- `http_server_requests_seconds_sum`: Suma de tiempo de respuesta
+- `jvm_memory_used_bytes`: Uso de memoria JVM
 
-# Ejecutar aplicación con perfil local
-mvn spring-boot:run -Dspring-boot.run.profiles=local
+### Parte 3: Integración Prometheus y Grafana
+**Objetivo**: Integrar Prometheus y Grafana para scraping y visualización de métricas
+
+**Configuración Prometheus** (`prometheus.yml`):
+```yaml
+scrape_configs:
+  - job_name: 'coffee-shop'
+    scrape_interval: 5s
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['coffee-shop:8080']
 ```
 
-### Opción 3: Especificar puerto personalizado
-```bash
-# Si el puerto 8080 está ocupado
-mvn spring-boot:run -Dspring-boot.run.arguments="--server.port=8082"
+**Configuración Grafana**:
+- Datasource Prometheus configurado automáticamente
+- Dashboard provisioning habilitado
+- Configuración persistente con volúmenes Docker
+
+**Docker Compose**:
+```yaml
+services:
+  coffee-shop-app:
+    build: .
+    ports:
+      - "8080:8080"
+  
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+  
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
 ```
 
-## 🌐 Acceso a la Aplicación
+### Parte 4: Dashboards Grafana
+**Objetivo**: Visualizar métricas requeridas en dashboards funcionales
 
-Una vez ejecutándose, la aplicación estará disponible en:
+**Dashboard Implementado**: "Coffee Shop Monitoring Dashboard"
 
-- **Puerto por defecto**: 8080
-- **Puerto alternativo**: 8082 (si especificaste uno diferente)
+**Paneles Incluidos**:
 
-### URLs importantes:
+1. **Requests Per Second (RPS)**
+   - Query: `sum(rate(http_server_requests_seconds_count[5m]))`
+   - Tipo: Stat panel
+   - Unidad: reqps
 
-1. **Swagger UI** (Documentación de la API):
-   ```
-    http://localhost:8082/swagger-ui/index.html
-   ```
+2. **Average Response Time**
+   - Query: `sum(rate(http_server_requests_seconds_sum[5m])) / sum(rate(http_server_requests_seconds_count[5m]))`
+   - Tipo: Stat panel
+   - Unidad: segundos
 
-2. **Health Check**:
-   ```
-      http://localhost:8082/api/products/health
-      http://localhost:8082/api/clients/health
-   ```
+3. **Coffee Orders Created**
+   - Query: `coffee_orders_total`
+   - Tipo: Stat panel
+   - Unidad: número
 
-3. **API Base**:
-   ```
-      http://localhost:8082/api/products
-      http://localhost:8082/api/clients
-   ```
+4. **Coffee Orders Delivered**
+   - Query: `coffee_orders_delivered_total`
+   - Tipo: Stat panel
+   - Unidad: número
 
-## 📚 Endpoints Disponibles
+5. **JVM Memory Used**
+   - Query: `jvm_memory_used_bytes{area="heap"}`
+   - Tipo: Stat panel
+   - Unidad: bytes
 
-### Productos
-- `GET /api/products` - Obtener todos los productos
-- `GET /api/products/{id}` - Obtener producto por ID
-- `GET /api/products/category/{category}` - Obtener productos por categoría
-- `GET /api/products/available` - Obtener productos disponibles
-- `GET /api/products/search?name={name}` - Buscar productos por nombre
-- `GET /api/products/price-range?minPrice={min}&maxPrice={max}` - Buscar por rango de precio
-- `POST /api/products` - Crear nuevo producto
-- `PUT /api/products/{id}` - Actualizar producto
-- `DELETE /api/products/{id}` - Eliminar producto
-- `PATCH /api/products/{id}/toggle-availability` - Cambiar disponibilidad
+6. **JVM Memory Non-Heap Used**
+   - Query: `jvm_memory_used_bytes{area="nonheap"}`
+   - Tipo: Stat panel
+   - Unidad: bytes
 
-### Clientes
-- `GET /api/clients` - Obtener todos los clientes
-- `GET /api/clients/{id}` - Obtener cliente por ID
-- `GET /api/clients/active` - Obtener clientes activos
-- `GET /api/clients/search?firstName={firstName}` - Buscar clientes por nombre
-- `GET /api/clients/search?lastName={lastName}` - Buscar clientes por apellido
-- `POST /api/clients` - Crear nuevo cliente
-- `PUT /api/clients/{id}` - Actualizar cliente
-- `DELETE /api/clients/{id}` - Eliminar cliente
-- `PATCH /api/clients/{id}/toggle-availability` - Cambiar disponibilidad
+7. **RPS Over Time**
+   - Query: `sum(rate(http_server_requests_seconds_count[1m]))`
+   - Tipo: Time series
+   - Unidad: reqps
 
-### Health Check
-- `GET /api/products/health` - Verificar estado del controlador
+8. **Response Time Over Time**
+   - Query: `sum(rate(http_server_requests_seconds_sum[5m])) / sum(rate(http_server_requests_seconds_count[5m]))`
+   - Tipo: Time series
+   - Unidad: segundos
 
-## 🗄️ Base de Datos
+9. **Orders Created Over Time**
+   - Query: `coffee_orders_total`
+   - Tipo: Time series
+   - Unidad: número
 
-### H2 (Desarrollo)
-- Base de datos en memoria
-- Se reinicia cada vez que ejecutas la aplicación
-- Consola web disponible en: `http://localhost:8082/h2-console`
-  - JDBC URL: `jdbc:h2:mem:testdb`
-  - Usuario: `sa`
-  - Contraseña: (vacío)
+10. **Orders Delivered Over Time**
+    - Query: `coffee_orders_delivered_total`
+    - Tipo: Time series
+    - Unidad: número
 
-### PostgreSQL (Producción)
-- Configurado en Docker Compose
-- Puerto: 5432
-- Base de datos: `coffee_shop`
-- Usuario: `coffee`
-- Contraseña: `coffee123`
+11. **JVM Memory Usage Over Time**
+    - Query: `jvm_memory_used_bytes{area="heap"}` y `jvm_memory_used_bytes{area="nonheap"}`
+    - Tipo: Time series
+    - Unidad: bytes
 
-## 🔧 Configuración
+**Configuración del Dashboard**:
+- Refresh automático cada 5 segundos
+- Rango de tiempo: Última hora
+- Estilo: Dark theme
+- Tags: coffee-shop, monitoring
 
-### Perfiles de Spring Boot
-- `default`: Usa H2 en memoria
-- `local`: Usa PostgreSQL local
-- `docker`: Usa PostgreSQL en Docker
+---
 
-### Archivos de configuración
-- `application.properties`: Configuración base
-- `application-local.properties`: Configuración para desarrollo local
-- `application-docker.properties`: Configuración para Docker
+## 🐳 Containerización y Despliegue
 
-## 🐳 Docker
-
-### Ejecutar solo la base de datos
+### Docker Compose (Desarrollo Local)
 ```bash
-docker compose up -d db
+# Iniciar todos los servicios
+./start-local.sh
+
+# O manualmente
+docker compose up -d
 ```
 
-### Ejecutar toda la aplicación
+**Servicios**:
+- `coffee-shop-app`: API Spring Boot (puerto 8080)
+- `postgres`: Base de datos PostgreSQL (puerto 5432)
+- `prometheus`: Servidor de métricas (puerto 9090)
+- `grafana`: Servidor de dashboards (puerto 3000)
+
+### Kubernetes (Producción)
 ```bash
-docker compose up
+# Desplegar en Kubernetes
+./deploy-k8s.sh
+
+# O manualmente
+kubectl apply -f k8s/namespace.yml
+kubectl apply -f k8s/postgres-deployment.yml
+kubectl apply -f k8s/coffee-shop-deployment.yml
+kubectl apply -f k8s/prometheus-deployment.yml
+kubectl apply -f k8s/grafana-deployment.yml
 ```
 
-## 📖 Uso de Swagger UI
+**Recursos Kubernetes**:
+- Namespace: `coffee-shop`
+- Deployments: coffee-shop, postgres, prometheus, grafana
+- Services: Exposición de puertos
+- ConfigMaps: Configuraciones de Prometheus y Grafana
+- PersistentVolumeClaims: Almacenamiento persistente
 
-1. Ve a `http://localhost:8082/swagger-ui/index.html`
-2. Explora los endpoints disponibles
-3. Haz clic en "Try it out" para probar cualquier endpoint
-4. Completa los parámetros requeridos
-5. Ejecuta la petición y ve la respuesta
+---
 
-## 🛠️ Desarrollo
+## 🧪 Testing y Validación
 
-### Estructura del proyecto
+### Script de Validación Automática
+```bash
+./validate-lab.sh
+```
+
+**Tests Ejecutados** (21 tests total):
+
+**1. API Endpoints (6 tests)**:
+- ✅ Coffee Shop API is running
+- ✅ GET /api/orders - List all orders
+- ✅ GET /api/orders/{id} - Get order by ID
+- ✅ POST /api/orders - Create order
+- ✅ PATCH /api/orders/{id}/status/{status} - Update order status
+- ✅ DELETE /api/orders/{id} - Delete order
+
+**2. Métricas (6 tests)**:
+- ✅ Metrics endpoint accessible
+- ✅ Coffee orders created metric exists
+- ✅ Coffee orders delivered metric exists
+- ✅ HTTP requests count metric exists
+- ✅ HTTP requests sum metric exists
+- ✅ JVM memory metric exists
+
+**3. Prometheus (5 tests)**:
+- ✅ Prometheus is running
+- ✅ Prometheus can query coffee orders metric
+- ✅ Prometheus can query coffee orders delivered metric
+- ✅ Prometheus can query HTTP requests count
+- ✅ Prometheus can query JVM memory metric
+- ✅ Prometheus targets are healthy
+
+**4. Grafana (3 tests)**:
+- ✅ Grafana is running
+- ✅ Grafana can access Prometheus
+- ✅ Coffee Shop dashboard exists
+
+### Generación de Datos de Prueba
+```bash
+./generate-test-metrics.sh
+```
+
+**Funcionalidades**:
+- Crea 10 pedidos de prueba
+- Actualiza estados de pedidos
+- Genera carga en la API
+- Permite visualizar métricas en tiempo real
+
+---
+
+## 📊 Monitoreo en Tiempo Real
+
+### Acceso a Dashboards
+1. **Grafana**: http://localhost:3000
+   - Usuario: `admin`
+   - Contraseña: `admin123`
+   - Dashboard: "Coffee Shop Monitoring Dashboard"
+
+2. **Prometheus**: http://localhost:9090
+   - Queries directas
+   - Targets status
+   - Métricas raw
+
+3. **API Metrics**: http://localhost:8080/actuator/prometheus
+   - Métricas en formato Prometheus
+   - Endpoint de scraping
+
+### Métricas en Vivo
+- **Scraping**: Cada 5 segundos
+- **Refresh**: Dashboard se actualiza automáticamente
+- **Persistencia**: Datos almacenados en Prometheus
+- **Visualización**: Gráficos en tiempo real en Grafana
+
+---
+
+## 🛠️ Desarrollo y Estructura
+
+### Estructura del Proyecto
 ```
 src/main/java/com/devops/coffee_shop/
 ├── coffee/
-│   ├── controller/     # Controladores REST
-│   ├── domain/         # Entidades JPA
-│   ├── dto/           # Objetos de transferencia de datos
-│   ├── repository/    # Repositorios de datos
-│   └── service/       # Lógica de negocio
+│   ├── controller/     # OrderController.java
+│   ├── domain/         # Order.java, OrderStatus.java
+│   ├── dto/           # OrderDto.java
+│   ├── repository/    # OrderRepository.java
+│   ├── service/       # OrderService.java
+│   └── metrics/       # CoffeeMetrics.java
 ├── config/            # Configuraciones
 └── CoffeeShopApplication.java
 ```
 
-### Agregar nuevos endpoints
-1. Crea el método en `ProductController.java`
-2. Agrega anotaciones de Swagger (`@Operation`, `@ApiResponse`)
-3. Implementa la lógica en `ProductService.java`
-4. La documentación se actualizará automáticamente
+### Archivos de Configuración
+- `application.properties`: Configuración base Spring Boot
+- `prometheus.yml`: Configuración de scraping
+- `grafana-datasources.yml`: Datasource provisioning
+- `grafana-dashboard-provisioning.yml`: Dashboard provisioning
+- `grafana-dashboard.json`: Definición del dashboard
+- `docker-compose.yml`: Orquestación de servicios
+- `Dockerfile`: Imagen de la aplicación
+
+### Scripts de Automatización
+- `start-local.sh`: Iniciar desarrollo local
+- `deploy-k8s.sh`: Desplegar en Kubernetes
+- `validate-lab.sh`: Validación completa
+- `generate-test-metrics.sh`: Generar datos de prueba
+
+---
+
+## 📝 Ejemplos de Uso
+
+### Crear un Pedido
+```bash
+curl -X POST http://localhost:8080/api/orders \
+  -H "Content-Type: application/json" \
+  -d '{
+    "customerName": "Ana García",
+    "drink": "latte",
+    "quantity": 2
+  }'
+```
+
+### Listar Pedidos
+```bash
+curl http://localhost:8080/api/orders
+```
+
+### Actualizar Estado
+```bash
+curl -X PATCH http://localhost:8080/api/orders/1/status/DELIVERED
+```
+
+### Ver Métricas
+```bash
+curl http://localhost:8080/actuator/prometheus | grep coffee_orders
+```
+
+---
 
 ## 🚨 Solución de Problemas
 
-### Puerto ocupado
+### Puerto Ocupado
 ```bash
-# Verificar qué proceso usa el puerto
+# Verificar proceso
 lsof -ti:8080
 
-# Matar el proceso
+# Matar proceso
 kill -9 <PID>
 
-# O usar un puerto diferente
+# Usar puerto diferente
 mvn spring-boot:run -Dspring-boot.run.arguments="--server.port=8082"
 ```
 
-### Error de validación
-Si ves errores de Bean Validation, asegúrate de que la dependencia esté en el `pom.xml`:
-```xml
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-validation</artifactId>
-</dependency>
-```
-
-## 📝 Ejemplo de uso con curl
-
+### Dashboard No Carga
 ```bash
-# Obtener todos los productos
-curl http://localhost:8082/api/products
+# Verificar logs de Grafana
+docker logs grafana
 
-# Crear un nuevo producto
-curl -X POST http://localhost:8082/api/products \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Café Americano",
-    "description": "Café negro americano",
-    "price": 2.50,
-    "category": "BEVERAGE",
-    "available": true
-  }'
-
-# Buscar productos
-curl "http://localhost:8082/api/products/search?name=café"
-
-# -------- Clientes --------
-
-# Obtener todos los clientes
-curl http://localhost:8082/api/clients
-
-# Crear un nuevo cliente
-curl -X POST http://localhost:8082/api/clients \
-  -H "Content-Type: application/json" \
-  -d '{
-    "firstName": "Juan",
-    "lastName": "Pérez",
-    "documentNumber": "4.123.456-7",
-    "birthDate": "1990-05-12",
-    "active": true
-  }'
-
-# Buscar clientes por nombre
-curl "http://localhost:8082/api/clients/search?firstName=juan"
-
-# Buscar clientes por apellido
-curl "http://localhost:8082/api/clients/search?lastName=perez"
-
-# Activar/desactivar un cliente
-curl -X PATCH http://localhost:8082/api/clients/1/toggle-availability
+# Reiniciar Grafana
+docker compose restart grafana
 ```
 
-## 🤝 Contribución
+### Métricas No Aparecen
+```bash
+# Verificar Prometheus targets
+curl http://localhost:9090/api/v1/targets
 
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
+# Verificar métricas de la aplicación
+curl http://localhost:8080/actuator/prometheus
+```
 
-## 📄 Licencia
+---
 
-Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para detalles.
+## 📄 Créditos
+
+Este proyecto fue realizado por **Matías Ferreira**, **Sebastián Forische** y **Lucas Martino** para la asignatura DevOps de la Universidad Católica del Uruguay.
+
+**Laboratorio 2 - DevOps**: API de pedidos de cafetería.
