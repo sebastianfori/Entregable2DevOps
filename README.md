@@ -138,13 +138,104 @@ Una vez ejecutándose, la aplicación estará disponible en:
 
 ### Ejecutar solo la base de datos
 ```bash
-docker compose up -d db
+docker compose up -d postgres
 ```
 
-### Ejecutar toda la aplicación
+### Ejecutar toda la aplicación con monitoreo
 ```bash
+# Opción 1: Script automatizado
+./start-local.sh
+
+# Opción 2: Manual
 docker compose up
 ```
+
+### Servicios incluidos
+- **Coffee Shop API**: Puerto 8080
+- **PostgreSQL**: Puerto 5432
+- **Prometheus**: Puerto 9090 (métricas cada 5 segundos)
+- **Grafana**: Puerto 3000 (admin/admin123)
+
+## ☸️ Kubernetes Deployment
+
+### Prerrequisitos
+- Kubernetes cluster (minikube, kind, o cluster de producción)
+- kubectl configurado
+- Docker image construida: `coffee-shop:latest`
+
+### Desplegar en Kubernetes
+```bash
+# Opción 1: Script automatizado
+./deploy-k8s.sh
+
+# Opción 2: Manual
+kubectl apply -f k8s/namespace.yml
+kubectl apply -f k8s/postgres-deployment.yml
+kubectl apply -f k8s/coffee-shop-deployment.yml
+kubectl apply -f k8s/prometheus-deployment.yml
+kubectl apply -f k8s/grafana-deployment.yml
+```
+
+### Acceder a los servicios
+```bash
+# Coffee Shop API
+kubectl port-forward -n coffee-shop svc/coffee-shop-service 8080:8080
+
+# Prometheus
+kubectl port-forward -n coffee-shop svc/prometheus-service 9090:9090
+
+# Grafana
+kubectl port-forward -n coffee-shop svc/grafana-service 3000:3000
+```
+
+### Verificar el despliegue
+```bash
+kubectl get pods -n coffee-shop
+kubectl get services -n coffee-shop
+```
+
+## 📊 Monitoreo y Métricas
+
+### Prometheus
+- **URL**: http://localhost:9090
+- **Scraping**: Cada 5 segundos desde `/actuator/prometheus`
+- **Métricas personalizadas**:
+  - `coffee_orders_created_total`: Total de pedidos creados
+  - `coffee_orders_delivered_total`: Total de pedidos entregados
+
+### Grafana
+- **URL**: http://localhost:3000
+- **Usuario**: admin
+- **Contraseña**: admin123
+- **Fuente de datos**: Prometheus (configurada automáticamente)
+- **Dashboard**: Coffee Shop Monitoring Dashboard (configurado automáticamente)
+
+### Dashboards Incluidos
+El dashboard "Coffee Shop Monitoring Dashboard" incluye:
+
+1. **Requests Per Second (RPS)**: Tasa de requests por segundo
+2. **Average Response Time**: Latencia promedio de endpoints
+3. **Coffee Orders Created**: Cantidad total de pedidos creados (`coffee_orders_created_total`)
+4. **Coffee Orders Delivered**: Cantidad total de pedidos entregados (`coffee_orders_delivered_total`)
+5. **JVM Memory Used**: Métricas de memoria JVM (`jvm_memory_used_bytes`)
+6. **RPS Over Time**: Gráfico temporal de requests por segundo
+7. **Response Time Percentiles**: Percentiles de tiempo de respuesta (50th, 95th, 99th)
+8. **Orders Created Over Time**: Gráfico temporal de pedidos creados
+9. **Orders Delivered Over Time**: Gráfico temporal de pedidos entregados
+10. **JVM Memory Usage Over Time**: Gráfico temporal de uso de memoria JVM
+
+### Generar Datos de Prueba
+Para poblar los dashboards con datos de prueba:
+
+```bash
+./generate-test-metrics.sh
+```
+
+Este script:
+- Crea 10 pedidos de prueba
+- Actualiza estados de pedidos
+- Genera carga en la API
+- Permite visualizar las métricas en tiempo real
 
 ## 📖 Uso de Swagger UI
 
@@ -244,14 +335,6 @@ curl "http://localhost:8082/api/clients/search?lastName=perez"
 curl -X PATCH http://localhost:8082/api/clients/1/toggle-availability
 ```
 
-## 🤝 Contribución
+## 📄 Créditos
 
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
-
-## 📄 Licencia
-
-Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para detalles.
+Este proyecto fue realizado por Matías Ferreira, Sebastián Forische y Lucas Martino para la asignatura DevOps de la Universidad Católica del Uruguay
